@@ -43,8 +43,8 @@ const Auth = () => {
       await signIn('credentials', {
         email,
         password,
-        redirect: false,
-        callbackUrl: '/'
+        redirect: true,
+        callbackUrl: '/profiles'
       });
 
       router.push('/profiles');
