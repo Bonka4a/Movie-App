@@ -45,9 +45,11 @@ const Auth = () => {
         password,
         redirect: true,
         callbackUrl: '/profiles'
+      }).then(() => {
+        router.push('/profiles');
       });
 
-      return router.push('/profiles');
+       
     } catch (error) {
       console.log(error);
     }
