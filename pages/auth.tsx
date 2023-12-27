@@ -1,131 +1,77 @@
-import axios from 'axios';
-import { useCallback, useState } from 'react';
-import { NextPageContext } from 'next';
-import { getSession, signIn } from 'next-auth/react';
-import { useRouter } from 'next/router';
-import { FcGoogle } from 'react-icons/fc';
-import { FaGithub } from 'react-icons/fa';
+import React, { useCallback, useEffect, useState } from 'react';
+import { BellIcon, MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 
-import Input from '@/components/Input';
+import AccountMenu from '@/components/AccountMenu';
+import MobileMenu from '@/components/MobileMenu';
+import NavbarItem from '@/components/NavbarItem';
 
-export async function getServerSideProps(context: NextPageContext) {
-  const session = await getSession(context);
+const TOP_OFFSET = 66;
 
-  if (session) {
-    return {
-      redirect: {
-        destination: '/',
-        permanent: false,
+const Navbar = () => {
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [showBackground, setShowBackground] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      console.log(window.scrollY)
+      if (window.scrollY >= TOP_OFFSET) {
+        setShowBackground(true)
+      } else {
+        setShowBackground(false)
       }
     }
-  }
 
-  return {
-    props: {}
-  }
-}
+    window.addEventListener('scroll', handleScroll);
 
-const Auth = () => {
-  const router = useRouter();
-
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-
-  const [variant, setVariant] = useState('login');
-
-  const toggleVariant = useCallback(() => {
-    setVariant((currentVariant) => currentVariant === 'login' ? 'register' : 'login');
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    }
   }, []);
 
-  const login = useCallback(async () => {
-    try {
-      await signIn('credentials', {
-        email,
-        password,
-        redirect: false,
-        callbackUrl: '/'
-      });
+  const toggleAccountMenu = useCallback(() => {
+    setShowAccountMenu((current) => !current);
+  }, []);
 
-      router.push('/profiles');
-    } catch (error) {
-      console.log(error);
-    }
-  }, [email, password, router]);
-
-  const register = useCallback(async () => {
-    try {
-      await axios.post('/api/register', {
-        email,
-        name,
-        password
-      });
-
-      login();
-    } catch (error) {
-        console.log(error);
-    }
-  }, [email, name, password, login]);
+  const toggleMobileMenu = useCallback(() => {
+    setShowMobileMenu((current) => !current);
+  }, []);
 
   return (
-    <div className="relative h-full w-full bg-[url('/images/hero.jpg')] bg-no-repeat bg-center bg-fixed bg-cover">
-      <div className="bg-black w-full h-full lg:bg-opacity-50">
-        <nav className="px-12 py-5">
-          <img src="/images/logo.png" className="h-12" alt="Logo" />
-        </nav>
-        <div className="flex justify-center">
-          <div className="bg-black bg-opacity-70 px-16 py-16 self-center mt-2 lg:w-2/5 lg:max-w-md rounded-md w-full">
-            <h2 className="text-white text-4xl mb-8 font-semibold">
-              {variant === 'login' ? 'Sign in' : 'Register'}
-            </h2>
-            <div className="flex flex-col gap-4">
-              {variant === 'register' && (
-                <Input
-                  id="name"
-                  type="text"
-                  label="Username"
-                  value={name}
-                  onChange={(e: any) => setName(e.target.value)} 
-                />
-              )}
-              <Input
-                id="email"
-                type="email"
-                label="Email address or phone number"
-                value={email}
-                onChange={(e: any) => setEmail(e.target.value)} 
-              />
-              <Input
-                type="password" 
-                id="password" 
-                label="Password" 
-                value={password}
-                onChange={(e: any) => setPassword(e.target.value)} 
-              />
+    <nav className="w-full fixed z-40">
+      <div className={`px-4 md:px-16 py-6 flex flex-row items-center transition duration-500 ${showBackground ? 'bg-zinc-900 bg-opacity-90' : ''}`}>
+        <img src="/images/movieLogo.png" className="h-4 lg:h-7" alt="Logo" />
+        <div className="flex-row ml-8 gap-7 hidden lg:flex">
+          <NavbarItem label="Home" active />
+          <NavbarItem label="Series" />
+          <NavbarItem label="Films" />
+          <NavbarItem label="New & Popular" />
+          <NavbarItem label="My List" />
+          <NavbarItem label="Browse by Languages" />
+        </div>
+        <div onClick={toggleMobileMenu} className="lg:hidden flex flex-row items-center gap-2 ml-8 cursor-pointer relative">
+          <p className="text-white text-sm">Browse</p>
+          <ChevronDownIcon className={`w-4 text-white fill-white transition ${showMobileMenu ? 'rotate-180' : 'rotate-0'}`} />
+          <MobileMenu visible={showMobileMenu} />
+        </div>
+        <div className="flex flex-row ml-auto gap-7 items-center">
+          <div className="text-gray-200 hover:text-gray-300 cursor-pointer transition">
+            <MagnifyingGlassIcon className="w-6" />
+          </div>
+          <div className="text-gray-200 hover:text-gray-300 cursor-pointer transition">
+            <BellIcon className="w-6" />
+          </div>
+          <div onClick={toggleAccountMenu} className="flex flex-row items-center gap-2 cursor-pointer relative">
+            <div className="w-6 h-6 lg:w-10 lg:h-10 rounded-md overflow-hidden">
+              <img src="/images/default-blue.png" alt="" />
             </div>
-            <button onClick={variant === 'login' ? login : register} className="bg-red-600 py-3 text-white rounded-md w-full mt-10 hover:bg-red-700 transition">
-              {variant === 'login' ? 'Login' : 'Sign up'}
-            </button>
-            <div className="flex flex-row items-center gap-4 mt-8 justify-center">
-              <div onClick={() => signIn('google', { callbackUrl: '/profiles' })} className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition">
-                <FcGoogle size={32} />
-              </div>
-              <div onClick={() => signIn('github', { callbackUrl: '/profiles' })} className="w-10 h-10 bg-white rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition">
-                <FaGithub size={32} />
-              </div>
-            </div>
-            <p className="text-neutral-500 mt-12">
-              {variant === 'login' ? 'First time using Netflix?' : 'Already have an account?'}
-              <span onClick={toggleVariant} className="text-white ml-1 hover:underline cursor-pointer">
-                {variant === 'login' ? 'Create an account' : 'Login'}
-              </span>
-              .
-            </p>
+            <ChevronDownIcon className={`w-4 text-white fill-white transition ${showAccountMenu ? 'rotate-180' : 'rotate-0'}`} />
+            <AccountMenu visible={showAccountMenu} />
           </div>
         </div>
       </div>
-    </div>
-  );
+    </nav>
+  )
 }
 
-export default Auth;
+export default Navbar;
