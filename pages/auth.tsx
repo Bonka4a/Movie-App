@@ -47,6 +47,8 @@ const Auth = () => {
         callbackUrl: '/profiles'
       }).then(() => {
         router.push('/profiles');
+      }).finally(() => {
+        router.push('/profiles')
       });
 
        
